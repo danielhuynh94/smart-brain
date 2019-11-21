@@ -1,31 +1,35 @@
-import React from 'react';
+import React from "react";
 
 class Register extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      email: '',
-      password: '',
-      name: ''
-    }
+      email: "",
+      password: "",
+      name: ""
+    };
   }
 
-  onNameChange = (event) => {
-    this.setState({name: event.target.value})
-  }
+  onNameChange = event => {
+    this.setState({ name: event.target.value });
+  };
 
-  onEmailChange = (event) => {
-    this.setState({email: event.target.value})
-  }
+  onEmailChange = event => {
+    this.setState({ email: event.target.value });
+  };
 
-  onPasswordChange = (event) => {
-    this.setState({password: event.target.value})
-  }
+  onPasswordChange = event => {
+    this.setState({ password: event.target.value });
+  };
+
+  saveAuthTokenInSession = token => {
+    window.sessionStorage.setItem("token", token);
+  };
 
   onSubmitSignIn = () => {
-    fetch('http://localhost:3000/register', {
-      method: 'post',
-      headers: {'Content-Type': 'application/json'},
+    fetch("http://localhost:3000/register", {
+      method: "post",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: this.state.email,
         password: this.state.password,
@@ -33,13 +37,27 @@ class Register extends React.Component {
       })
     })
       .then(response => response.json())
-      .then(user => {
-        if (user.id) {
-          this.props.loadUser(user)
-          this.props.onRouteChange('home');
+      .then(data => {
+        if (data.userId && data.success === "true") {
+          this.saveAuthTokenInSession(data.token);
+          fetch(`http://localhost:3000/profile/${data.userId}`, {
+            method: "get",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: data.token
+            }
+          })
+            .then(resp => resp.json())
+            .then(user => {
+              if (user && user.email) {
+                this.props.loadUser(user);
+                this.props.onRouteChange("home");
+              }
+            })
+            .catch(console.log);
         }
-      })
-  }
+      });
+  };
 
   render() {
     return (
@@ -49,7 +67,9 @@ class Register extends React.Component {
             <fieldset id="sign_up" className="ba b--transparent ph0 mh0">
               <legend className="f1 fw6 ph0 mh0">Register</legend>
               <div className="mt3">
-                <label className="db fw6 lh-copy f6" htmlFor="name">Name</label>
+                <label className="db fw6 lh-copy f6" htmlFor="name">
+                  Name
+                </label>
                 <input
                   className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
                   type="text"
@@ -59,7 +79,9 @@ class Register extends React.Component {
                 />
               </div>
               <div className="mt3">
-                <label className="db fw6 lh-copy f6" htmlFor="email-address">Email</label>
+                <label className="db fw6 lh-copy f6" htmlFor="email-address">
+                  Email
+                </label>
                 <input
                   className="pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
                   type="email"
@@ -69,7 +91,9 @@ class Register extends React.Component {
                 />
               </div>
               <div className="mv3">
-                <label className="db fw6 lh-copy f6" htmlFor="password">Password</label>
+                <label className="db fw6 lh-copy f6" htmlFor="password">
+                  Password
+                </label>
                 <input
                   className="b pa2 input-reset ba bg-transparent hover-bg-black hover-white w-100"
                   type="password"
